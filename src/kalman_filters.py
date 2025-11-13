@@ -36,7 +36,7 @@ def kalman_hedge_ratio(df):
     Estimate dynamic hedge ratios using Kalman Filter regression.
     """
     y = df['price_V'].values
-    x = df['price_MA'].values
+    x = df['price_AXP'].values
     n = len(x)
     
     beta = np.zeros(n)

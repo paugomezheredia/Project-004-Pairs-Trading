@@ -36,7 +36,7 @@ def generate_pair_plots(data_dir, figures_dir):
     axp_path = os.path.join(data_dir, "AXP.csv")
 
     if os.path.exists(pairs_path):
-        df = pd.read_csv(pairs_path, parse_dates=["date"])
+        df = pd.read_csv(pairs_path, parse_dates=["Date"])
         # Expecting price_V and price_AXP columns; if not, try fallback
         if not {"price_V", "price_AXP"}.issubset(df.columns):
             raise ValueError("pairs_data.csv found but missing price_V/price_AXP columns.")
@@ -47,11 +47,11 @@ def generate_pair_plots(data_dir, figures_dir):
         # Fallback: load raw V and AXP and merge by date
         if not (os.path.exists(v_path) and os.path.exists(axp_path)):
             raise FileNotFoundError("Neither pairs_data.csv nor V.csv/AXP.csv found in data directory.")
-        v = pd.read_csv(v_path, parse_dates=["date"])
-        axp = pd.read_csv(axp_path, parse_dates=["date"])
+        v = pd.read_csv(v_path, parse_dates=["Date"])
+        axp = pd.read_csv(axp_path, parse_dates=["Date"])
         v = v.rename(columns={"Close": "price_V"})
         axp = axp.rename(columns={"Close": "price_AXP"})
-        merged = pd.merge(v[["date", "price_V"]], axp[["date", "price_AXP"]], on="date", how="inner").sort_values("date")
+        merged = pd.merge(v[["Date", "price_V"]], axp[["Date", "price_AXP"]], on="Date", how="inner").sort_values("Date")
         df = merged.reset_index(drop=True)
         price_v = df["price_V"]
         price_AXP = df["price_AXP"]
@@ -60,8 +60,8 @@ def generate_pair_plots(data_dir, figures_dir):
         spread = price_v - beta * price_AXP
 
     # Ensure date is datetime index for plotting
-    if "date" in df.columns:
-        dates = pd.to_datetime(df["date"])
+    if "Date" in df.columns:
+        dates = pd.to_datetime(df["Date"])
     else:
         # If no date column, create index range
         dates = pd.RangeIndex(start=0, stop=len(df), step=1)
