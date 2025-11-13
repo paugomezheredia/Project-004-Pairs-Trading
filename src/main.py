@@ -1,65 +1,92 @@
 """
 main.py
 --------
-Master script to execute the full Pairs Trading project pipeline.
+Main orchestrator for the Pairs Trading project.
 
-This script sequentially runs all modules:
-    1. Load and merge raw data (Visa & Mastercard)
-    2. Run cointegration tests
-    3. Estimate dynamic hedge ratios with Kalman filters
-    4. Generate trading signals
-    5. Perform backtesting with transaction costs
-    6. Analyze performance and generate figures
-
-All intermediate data and results are stored in the /data and /figures folders.
+Executes the full pipeline:
+1. Load Visa & Mastercard data
+2. Merge and create pairs dataset
+3. Perform cointegration tests
+4. Estimate dynamic hedge ratios (Kalman Filter)
+5. Compute spread and z-score
+6. Generate trading signals
+7. Run backtest simulation
+8. Analyze performance and save figures
 """
 
+import os
 import sys
 import pandas as pd
+import numpy as np
 
-# Import all project modules
+# Ensure the current directory and parent directory are accessible
+sys.path.append(os.path.dirname(__file__))
+
+# === Import modules ===
+from load_data import load_csv
 from create_pairs_dataset import create_pairs_dataset
-from cointegration_tests import run_cointegration_tests
-from kalman_filters import run_kalman_filters
-from trading_strategy import generate_trading_signals
-from backtesting import backtest_strategy
+from cointegration_tests import engle_granger_test, johansen_test
+from kalman_filters import kalman_hedge_ratio
+from trading_strategy import generate_signals
+from backtesting import backtest
 from performance_analysis import analyze_performance
 
+
 def main():
-    """Run all stages of the Pairs Trading pipeline sequentially."""
-    print("🚀 Starting full Pairs Trading pipeline...\n")
+    print("🚀 Starting Pairs Trading pipeline...\n")
 
-    try:
-        # 1️⃣ Merge both datasets into one clean file
-        print("🧩 Step 1: Creating merged dataset...")
-        create_pairs_dataset('data/V.csv', 'data/MA.csv', output_file='data/pairs_data.csv')
+    base_path = os.path.join(os.path.dirname(__file__), "..")
+    data_path = os.path.join(base_path, "data")
+    figures_path = os.path.join(base_path, "figures")
+    os.makedirs(figures_path, exist_ok=True)
 
-        # 2️⃣ Run cointegration tests
-        print("\n🔗 Step 2: Running cointegration tests...")
-        run_cointegration_tests('data/pairs_data.csv')
+    # === LOAD RAW DATA ===
+    print("📂 Loading Visa and Mastercard data...")
+    v = load_csv(os.path.join(data_path, "V.csv"), "V")
+    ma = load_csv(os.path.join(data_path, "MA.csv"), "MA")
 
-        # 3️⃣ Estimate hedge ratios with Kalman filters
-        print("\n📉 Step 3: Running Kalman filters...")
-        run_kalman_filters('data/pairs_data.csv')
+    # === CREATE PAIRS DATASET ===
+    print("🧩 Creating pairs dataset...")
+    pairs_df = create_pairs_dataset(
+        os.path.join(data_path, "V.csv"),
+        os.path.join(data_path, "MA.csv"),
+        "V", "MA",
+        output_file=os.path.join(data_path, "pairs_data.csv"))
 
-        # 4️⃣ Generate trading signals
-        print("\n⚙️ Step 4: Generating trading signals...")
-        generate_trading_signals('data/pairs_data.csv')
+    # === COINTEGRATION TESTS ===
+    print("🔗 Running cointegration tests...")
+    engle_result = engle_granger_test(pairs_df["spread"])
+    johansen_result = johansen_test(pairs_df, ["price_V", "price_MA"])
 
-        # 5️⃣ Backtest the trading strategy
-        print("\n💰 Step 5: Running backtest...")
-        backtest_strategy('data/pairs_data.csv', output_file='data/results.csv')
+    # === DYNAMIC HEDGE RATIOS (KALMAN FILTER) ===
+    print("🤖 Estimating dynamic hedge ratios with Kalman Filter...")
+    pairs_df = kalman_hedge_ratio(pairs_df)
 
-        # 6️⃣ Analyze performance and save figures
-        print("\n📊 Step 6: Analyzing performance...")
-        df = pd.read_csv('data/results.csv')
-        analyze_performance(df)
+    # === COMPUTE SPREAD & Z-SCORE ===
+    print("📊 Computing updated spread and z-score...")
+    pairs_df["spread"] = pairs_df["price_V"] - pairs_df["hedge_ratio"] * pairs_df["price_MA"]
+    pairs_df["zscore"] = (pairs_df["spread"] - pairs_df["spread"].mean()) / pairs_df["spread"].std()
+    pairs_df.to_csv(os.path.join(data_path, "pairs_data.csv"), index=False)
 
-        print("\n✅ All steps completed successfully. Results saved in /data and /figures folders.")
-    
-    except Exception as e:
-        print(f"❌ Pipeline stopped due to an error: {e}")
-        sys.exit(1)
+    # === TRADING SIGNALS ===
+    print("💡 Generating trading signals...")
+    pairs_df = generate_signals(pairs_df)
+
+    # === BACKTEST STRATEGY ===
+    print("🏁 Running backtest simulation...")
+    results_df = backtest(pairs_df)
+
+    # === PERFORMANCE ANALYSIS ===
+    print("📈 Analyzing performance and saving figures...")
+    results_file = os.path.join(data_path, "results.csv")
+
+    if os.path.exists(results_file):
+        df_results = pd.read_csv(results_file)
+        analyze_performance(df_results)
+    else:
+        print("⚠️ Skipping performance analysis (results.csv not found).\n")
+
+    print("🎯 Full Pairs Trading pipeline executed successfully!")
 
 
 if __name__ == "__main__":
