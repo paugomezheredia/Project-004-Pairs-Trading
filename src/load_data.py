@@ -29,6 +29,9 @@ def load_csv(filepath, ticker):
     df['date'] = pd.to_datetime(df['date'])
     df = df.sort_values('date').reset_index(drop=True)
     df['ticker'] = ticker
+    
+    print(f"✅ {ticker} data loaded successfully with {len(df)} records.")
+
     return df
 
 
