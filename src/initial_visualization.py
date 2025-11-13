@@ -2,12 +2,12 @@
 initial_visualization.py
 
 Generate and save two diagnostic charts for the pair:
-  1) Price relationship (Visa vs Mastercard)
+  1) Price relationship (Visa vs Amex)
   2) Spread evolution (spread and rolling mean)
 
 Behavior:
-  - If data/pairs_data.csv exists, the script uses its columns (price_V, price_MA, spread).
-  - Otherwise it falls back to reading data/V.csv and data/MA.csv and computes a simple static spread.
+  - If data/pairs_data.csv exists, the script uses its columns (price_V, price_AXP, spread).
+  - Otherwise it falls back to reading data/V.csv and data/AXP.csv and computes a simple static spread.
   - Saves figures to the 'figures' directory (creates it if missing).
 """
 
@@ -23,7 +23,7 @@ def generate_pair_plots(data_dir, figures_dir):
     Parameters
     ----------
     data_dir : str
-        Path to directory containing V.csv, MA.csv and optionally pairs_data.csv
+        Path to directory containing V.csv, AXP.csv and optionally pairs_data.csv
     figures_dir : str
         Path where figures will be saved (directory will be created if needed)
     """
@@ -33,31 +33,31 @@ def generate_pair_plots(data_dir, figures_dir):
 
     pairs_path = os.path.join(data_dir, "pairs_data.csv")
     v_path = os.path.join(data_dir, "V.csv")
-    ma_path = os.path.join(data_dir, "MA.csv")
+    axp_path = os.path.join(data_dir, "AXP.csv")
 
     if os.path.exists(pairs_path):
         df = pd.read_csv(pairs_path, parse_dates=["date"])
-        # Expecting price_V and price_MA columns; if not, try fallback
-        if not {"price_V", "price_MA"}.issubset(df.columns):
-            raise ValueError("pairs_data.csv found but missing price_V/price_MA columns.")
+        # Expecting price_V and price_AXP columns; if not, try fallback
+        if not {"price_V", "price_AXP"}.issubset(df.columns):
+            raise ValueError("pairs_data.csv found but missing price_V/price_AXP columns.")
         price_v = df["price_V"]
-        price_ma = df["price_MA"]
-        spread = df["spread"] if "spread" in df.columns else (price_v - (price_v / price_ma).mean() * price_ma)
+        price_AXP = df["price_AXP"]
+        spread = df["spread"] if "spread" in df.columns else (price_v - (price_v / price_AXP).mean() * price_AXP)
     else:
-        # Fallback: load raw V and MA and merge by date
-        if not (os.path.exists(v_path) and os.path.exists(ma_path)):
-            raise FileNotFoundError("Neither pairs_data.csv nor V.csv/MA.csv found in data directory.")
+        # Fallback: load raw V and AXP and merge by date
+        if not (os.path.exists(v_path) and os.path.exists(axp_path)):
+            raise FileNotFoundError("Neither pairs_data.csv nor V.csv/AXP.csv found in data directory.")
         v = pd.read_csv(v_path, parse_dates=["date"])
-        ma = pd.read_csv(ma_path, parse_dates=["date"])
-        v = v.rename(columns={"adj_close": "price_V"})
-        ma = ma.rename(columns={"adj_close": "price_MA"})
-        merged = pd.merge(v[["date", "price_V"]], ma[["date", "price_MA"]], on="date", how="inner").sort_values("date")
+        axp = pd.read_csv(axp_path, parse_dates=["date"])
+        v = v.rename(columns={"Close": "price_V"})
+        axp = axp.rename(columns={"Close": "price_AXP"})
+        merged = pd.merge(v[["date", "price_V"]], axp[["date", "price_AXP"]], on="date", how="inner").sort_values("date")
         df = merged.reset_index(drop=True)
         price_v = df["price_V"]
-        price_ma = df["price_MA"]
+        price_AXP = df["price_AXP"]
         # simple static beta (mean ratio)
-        beta = (price_v / (price_ma + 1e-12)).mean()
-        spread = price_v - beta * price_ma
+        beta = (price_v / (price_AXP + 1e-12)).mean()
+        spread = price_v - beta * price_AXP
 
     # Ensure date is datetime index for plotting
     if "date" in df.columns:
@@ -69,17 +69,17 @@ def generate_pair_plots(data_dir, figures_dir):
     # ---- Plot 1: Price relationship ----
     fig1, ax1 = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
     ax1[0].plot(dates, price_v, label="Visa (V)")
-    ax1[0].plot(dates, price_ma, label="Mastercard (MA)")
-    ax1[0].set_title("Price Relationship: Visa vs Mastercard")
+    ax1[0].plot(dates, price_AXP, label="Amex (AXP)")
+    ax1[0].set_title("Price Relationship: Visa vs Amex")
     ax1[0].set_ylabel("Adjusted Close Price")
     ax1[0].legend()
     ax1[0].grid(True)
 
     # Normalized comparison for clearer visual (base 100)
     norm_v = (price_v / price_v.iloc[0]) * 100 if len(price_v) > 0 else price_v
-    norm_ma = (price_ma / price_ma.iloc[0]) * 100 if len(price_ma) > 0 else price_ma
+    norm_axp = (price_AXP / price_AXP.iloc[0]) * 100 if len(price_AXP) > 0 else price_AXP
     ax1[1].plot(dates, norm_v, label="Visa (base 100)")
-    ax1[1].plot(dates, norm_ma, label="Mastercard (base 100)")
+    ax1[1].plot(dates, norm_axp, label="Amex (base 100)")
     ax1[1].set_title("Normalized Price (Base = 100)")
     ax1[1].set_ylabel("Indexed Price")
     ax1[1].set_xlabel("Date")
