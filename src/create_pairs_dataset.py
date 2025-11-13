@@ -40,7 +40,9 @@ def create_pairs_dataset(file_a, file_b, ticker_a, ticker_b, output_file='../dat
     merged['zscore'] = (merged['spread'] - merged['spread'].mean()) / merged['spread'].std()
 
     merged.to_csv(output_file, index=False)
+
     print(f"✅ Pairs dataset saved: {output_file}")
+    
     return merged
 
 
