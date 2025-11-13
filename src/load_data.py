@@ -26,7 +26,7 @@ def load_csv(filepath, ticker):
     if not required_cols.issubset(df.columns):
         raise ValueError(f"Missing required columns in {filepath}")
 
-    df['Date'] = pd.to_Datetime(df['Date'])
+    df['Date'] = pd.to_datetime(df['Date'])
     df = df.sort_values('Date').reset_index(drop=True)
     df['ticker'] = ticker
     
