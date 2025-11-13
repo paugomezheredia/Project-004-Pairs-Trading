@@ -25,6 +25,7 @@ sys.path.append(os.path.dirname(__file__))
 # === Import modules ===
 from load_data import load_csv
 from create_pairs_dataset import create_pairs_dataset
+from initial_visualization import generate_pair_plots
 from cointegration_tests import engle_granger_test, johansen_test
 from kalman_filters import kalman_hedge_ratio
 from trading_strategy import generate_signals
@@ -52,6 +53,14 @@ def main():
         os.path.join(data_path, "MA.csv"),
         "V", "MA",
         output_file=os.path.join(data_path, "pairs_data.csv"))
+    
+    # == INITIAL VISUALIZATION CHARTS ==
+    base_path = os.path.join(os.path.dirname(__file__), "..")
+    data_path = os.path.join(base_path, "data")
+    figures_path = os.path.join(base_path, "figures")
+    os.makedirs(figures_path, exist_ok=True)
+    
+    generate_pair_plots(data_path, figures_path)
 
     # === COINTEGRATION TESTS ===
     print("🔗 Running cointegration tests...")
