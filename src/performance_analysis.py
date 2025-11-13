@@ -11,7 +11,7 @@ def analyze_performance(df):
     Parameters
     ----------
     df : pd.DataFrame
-        DataFrame containing 'date' and 'portfolio_value' columns.
+        DataFrame containing 'Date' and 'portfolio_value' columns.
 
     Returns
     -------
@@ -37,7 +37,7 @@ def analyze_performance(df):
 
     # ------- Equity Curve -------
     plt.figure(figsize=(10, 5))
-    plt.plot(df['date'], df['portfolio_value'], color='blue')
+    plt.plot(df['Date'], df['portfolio_value'], color='blue')
     plt.title("Equity Curve Over Time")
     plt.xlabel("Date")
     plt.ylabel("Portfolio Value")
@@ -61,7 +61,7 @@ def analyze_performance(df):
     rolling_sharpe = (df['returns'].rolling(rolling_window).mean() /
                       df['returns'].rolling(rolling_window).std()) * np.sqrt(252)
     plt.figure(figsize=(10, 5))
-    plt.plot(df['date'], rolling_sharpe, color='darkorange')
+    plt.plot(df['Date'], rolling_sharpe, color='darkorange')
     plt.title(f"Rolling {rolling_window}-Day Sharpe Ratio")
     plt.xlabel("Date")
     plt.ylabel("Sharpe Ratio")
@@ -74,7 +74,7 @@ def analyze_performance(df):
     cumulative_max = df['portfolio_value'].cummax()
     drawdown = (df['portfolio_value'] - cumulative_max) / cumulative_max
     plt.figure(figsize=(10, 5))
-    plt.plot(df['date'], drawdown, color='red')
+    plt.plot(df['Date'], drawdown, color='red')
     plt.title("Drawdown Over Time")
     plt.xlabel("Date")
     plt.ylabel("Drawdown")

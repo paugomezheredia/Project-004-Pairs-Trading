@@ -4,7 +4,7 @@ main.py
 Main orchestrator for the Pairs Trading project.
 
 Executes the full pipeline:
-1. Load Visa & Mastercard data
+1. Load Visa & Amex data
 2. Merge and create pairs dataset
 3. Perform cointegration tests
 4. Estimate dynamic hedge ratios (Kalman Filter)
@@ -25,6 +25,7 @@ sys.path.append(os.path.dirname(__file__))
 # === Import modules ===
 from load_data import load_csv
 from create_pairs_dataset import create_pairs_dataset
+from initial_visualization import generate_pair_plots
 from cointegration_tests import engle_granger_test, johansen_test
 from kalman_filters import kalman_hedge_ratio
 from trading_strategy import generate_signals
@@ -41,22 +42,30 @@ def main():
     os.makedirs(figures_path, exist_ok=True)
 
     # === LOAD RAW DATA ===
-    print("📂 Loading Visa and Mastercard data...")
+    print("📂 Loading Visa and Amex data...")
     v = load_csv(os.path.join(data_path, "V.csv"), "V")
-    ma = load_csv(os.path.join(data_path, "MA.csv"), "MA")
+    ma = load_csv(os.path.join(data_path, "AXP.csv"), "AXP")
 
     # === CREATE PAIRS DATASET ===
     print("🧩 Creating pairs dataset...")
     pairs_df = create_pairs_dataset(
         os.path.join(data_path, "V.csv"),
-        os.path.join(data_path, "MA.csv"),
-        "V", "MA",
+        os.path.join(data_path, "AXP.csv"),
+        "V", "AXP",
         output_file=os.path.join(data_path, "pairs_data.csv"))
+    
+    # == INITIAL VISUALIZATION CHARTS ==
+    base_path = os.path.join(os.path.dirname(__file__), "..")
+    data_path = os.path.join(base_path, "data")
+    figures_path = os.path.join(base_path, "figures")
+    os.makedirs(figures_path, exist_ok=True)
+    
+    generate_pair_plots(data_path, figures_path)
 
     # === COINTEGRATION TESTS ===
     print("🔗 Running cointegration tests...")
     engle_result = engle_granger_test(pairs_df["spread"])
-    johansen_result = johansen_test(pairs_df, ["price_V", "price_MA"])
+    johansen_result = johansen_test(pairs_df, ["price_V", "price_AXP"])
 
     # === DYNAMIC HEDGE RATIOS (KALMAN FILTER) ===
     print("🤖 Estimating dynamic hedge ratios with Kalman Filter...")
@@ -64,7 +73,7 @@ def main():
 
     # === COMPUTE SPREAD & Z-SCORE ===
     print("📊 Computing updated spread and z-score...")
-    pairs_df["spread"] = pairs_df["price_V"] - pairs_df["hedge_ratio"] * pairs_df["price_MA"]
+    pairs_df["spread"] = pairs_df["price_V"] - pairs_df["hedge_ratio"] * pairs_df["price_AXP"]
     pairs_df["zscore"] = (pairs_df["spread"] - pairs_df["spread"].mean()) / pairs_df["spread"].std()
     pairs_df.to_csv(os.path.join(data_path, "pairs_data.csv"), index=False)
 

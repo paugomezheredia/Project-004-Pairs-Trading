@@ -5,7 +5,7 @@ def create_pairs_dataset(file_a, file_b, ticker_a, ticker_b, output_file='../dat
     """
     Combine two single-asset datasets into a unified pairs dataset.
 
-    Merges both assets by date, computes spread and z-score, and
+    Merges both assets by Date, computes spread and z-score, and
     saves the resulting file for further analysis.
 
     Parameters
@@ -25,12 +25,12 @@ def create_pairs_dataset(file_a, file_b, ticker_a, ticker_b, output_file='../dat
     df_a = load_csv(file_a, ticker_a)
     df_b = load_csv(file_b, ticker_b)
 
-    df_a.rename(columns={'adj_close': f'price_{ticker_a}'}, inplace=True)
-    df_b.rename(columns={'adj_close': f'price_{ticker_b}'}, inplace=True)
+    df_a.rename(columns={'Close': f'price_{ticker_a}'}, inplace=True)
+    df_b.rename(columns={'Close': f'price_{ticker_b}'}, inplace=True)
 
-    merged = pd.merge(df_a[['date', f'price_{ticker_a}']],
-                      df_b[['date', f'price_{ticker_b}']],
-                      on='date', how='inner')
+    merged = pd.merge(df_a[['Date', f'price_{ticker_a}']],
+                      df_b[['Date', f'price_{ticker_b}']],
+                      on='Date', how='inner')
 
     merged['ticker_A'] = ticker_a
     merged['ticker_B'] = ticker_b
@@ -47,4 +47,4 @@ def create_pairs_dataset(file_a, file_b, ticker_a, ticker_b, output_file='../dat
 
 
 if __name__ == "__main__":
-    create_pairs_dataset('../data/V.csv', '../data/MA.csv', 'V', 'MA')
+    create_pairs_dataset('../data/V.csv', '../data/AXP.csv', 'V', 'AXP')
