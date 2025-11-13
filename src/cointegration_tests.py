@@ -33,7 +33,7 @@ def johansen_test(df, cols):
     df : pd.DataFrame
         DataFrame containing both price series
     cols : list
-        List of column names to test (e.g., ['price_V', 'price_MA'])
+        List of column names to test (e.g., ['price_V', 'price_AXP'])
 
     Returns
     -------
@@ -52,4 +52,4 @@ def johansen_test(df, cols):
 if __name__ == "__main__":
     df = pd.read_csv('../data/pairs_data.csv')
     print(engle_granger_test(df['spread']))
-    print(johansen_test(df, ['price_V', 'price_MA']))
+    print(johansen_test(df, ['price_V', 'price_AXP']))
