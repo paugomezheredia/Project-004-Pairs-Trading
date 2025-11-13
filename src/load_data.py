@@ -5,9 +5,9 @@ def load_csv(filepath, ticker):
     """
     Load and clean a single asset CSV file.
 
-    Reads a CSV containing columns ['date', 'adj_close'] and adds
+    Reads a CSV containing columns ['Date', 'Close'] and adds
     a 'ticker' column for identification. Ensures the data is sorted
-    by date and formatted correctly.
+    by Date and formatted correctly.
 
     Parameters
     ----------
@@ -19,15 +19,15 @@ def load_csv(filepath, ticker):
     Returns
     -------
     pd.DataFrame
-        Clean DataFrame with columns ['date', 'adj_close', 'ticker']
+        Clean DataFrame with columns ['Date', 'Close', 'ticker']
     """
     df = pd.read_csv(filepath)
-    required_cols = {'date', 'adj_close'}
+    required_cols = {'Date', 'Close'}
     if not required_cols.issubset(df.columns):
         raise ValueError(f"Missing required columns in {filepath}")
 
-    df['date'] = pd.to_datetime(df['date'])
-    df = df.sort_values('date').reset_index(drop=True)
+    df['Date'] = pd.to_Datetime(df['Date'])
+    df = df.sort_values('Date').reset_index(drop=True)
     df['ticker'] = ticker
     
     print(f"✅ {ticker} data loaded successfully with {len(df)} records.")
@@ -37,5 +37,5 @@ def load_csv(filepath, ticker):
 
 if __name__ == "__main__":
     v = load_csv('../data/V.csv', 'V')
-    ma = load_csv('../data/MA.csv', 'MA')
-    print(v.head(), ma.head())
+    axp = load_csv('../data/AXP.csv', 'AXP')
+    print(v.head(), axp.head())
